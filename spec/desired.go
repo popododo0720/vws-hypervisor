@@ -176,7 +176,7 @@ func (d Desired) Digest() string {
 	return d.d.digest
 }
 
-// AppendCanonical writes the canonical JSON document.
+// MarshalCanonical returns the canonical JSON document.
 func (d Desired) MarshalCanonical() ([]byte, error) {
 	if d.d == nil {
 		return nil, errors.New("spec: zero desired has no canonical form")

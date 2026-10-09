@@ -4,6 +4,8 @@ import "github.com/popododo0720/vws-hypervisor/spec"
 
 // Step is one idempotent host mutation. The set is closed. Only Next can put
 // steps into a Plan. Callers outside this package cannot construct a Plan.
+//
+//sumtype:decl
 type Step interface {
 	Target() Ref
 	isStep()
@@ -103,7 +105,6 @@ func Op(s Step) string {
 		return "stop-vm"
 	case DestroyVM:
 		return "destroy-vm"
-	default:
-		return ""
 	}
+	return ""
 }

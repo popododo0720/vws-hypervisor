@@ -1,0 +1,102 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - depguard
+    - errorlint
+    - forbidigo
+    - gochecksumtype
+    - revive
+  settings:
+    forbidigo:
+      forbid:
+        - pattern: ^time\.Now$
+          msg: "reconcile is pure: take now as a parameter"
+    depguard:
+      rules:
+        spec:
+          files:
+            - "**/spec/**/*.go"
+          deny:
+            - pkg: github.com/popododo0720/vws-hypervisor/internal
+              desc: spec is the public document and depends on nothing in the module
+            - pkg: os
+              desc: spec is pure
+            - pkg: net
+              desc: spec is pure
+        reconcile:
+          files:
+            - "**/internal/reconcile/**/*.go"
+          deny:
+            - pkg: os
+              desc: reconcile is pure
+            - pkg: net
+              desc: reconcile is pure
+            - pkg: log/slog
+              desc: reconcile reports through Plan
+            - pkg: github.com/popododo0720/vws-hypervisor/internal/host
+              desc: host depends on reconcile
+            - pkg: github.com/popododo0720/vws-hypervisor/internal/qmp
+              desc: reconcile is pure
+            - pkg: github.com/popododo0720/vws-hypervisor/internal/agent
+              desc: reconcile is pure
+        host-privilege:
+          files:
+            - "**/internal/host/*.go"
+          deny:
+            - pkg: os/exec
+              desc: privileged operations go through host.Sys
+            - pkg: syscall
+              desc: privileged operations go through host.Sys
+            - pkg: github.com/popododo0720/vws-hypervisor/internal/agent
+              desc: agent depends on host
+            - pkg: github.com/popododo0720/vws-hypervisor/internal/host/linuxsys
+              desc: the caller chooses the Sys
+        qmp:
+          files:
+            - "**/internal/qmp/*.go"
+          deny:
+            - pkg: github.com/popododo0720/vws-hypervisor/spec
+              desc: qmp has no domain knowledge
+            - pkg: github.com/popododo0720/vws-hypervisor/internal/reconcile
+              desc: qmp has no domain knowledge
+            - pkg: github.com/popododo0720/vws-hypervisor/internal/host
+              desc: qmp has no domain knowledge
+        qmptest:
+          files:
+            - "**/internal/qmp/qmptest/**/*.go"
+          deny:
+            - pkg: github.com/popododo0720/vws-hypervisor/internal/qmp
+              desc: the fake peer does not import the client
+        agent:
+          files:
+            - "**/internal/agent/*.go"
+            - "!**/*_test.go"
+          deny:
+            - pkg: github.com/popododo0720/vws-hypervisor/internal/qmp
+              desc: QMP is host's business
+            - pkg: github.com/popododo0720/vws-hypervisor/internal/host/systest
+              desc: tests only
+            - pkg: github.com/popododo0720/vws-hypervisor/internal/host/linuxsys
+              desc: cmd chooses the Sys
+            - pkg: os/exec
+              desc: privileged operations go through host.Sys
+        cmd:
+          files:
+            - "**/cmd/**/*.go"
+          deny:
+            - pkg: github.com/popododo0720/vws-hypervisor/internal/qmp
+              desc: QMP is host's business
+            - pkg: github.com/popododo0720/vws-hypervisor/internal/host/systest
+              desc: tests only
+  exclusions:
+    rules:
+      - path-except: internal/reconcile/
+        linters:
+          - forbidigo
+
+formatters:
+  enable:
+    - gofmt
+    - goimports

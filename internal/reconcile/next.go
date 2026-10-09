@@ -88,7 +88,7 @@ func Next(d spec.Desired, o Observed, now time.Time) Plan {
 			b.wantStopped(vm, ovm, ok, now)
 			continue
 		}
-		b.wantRunning(d, o, vm, ovm, ok, now, held, unknown)
+		b.wantRunning(o, vm, ovm, ok, now, held, unknown)
 	}
 	for id, ovm := range o.VMs {
 		if _, ok := d.VM(id); ok {
@@ -163,9 +163,8 @@ func rank(s Step) int {
 		return 6
 	case DeleteNetwork:
 		return 7
-	default:
-		return 9
 	}
+	return 9
 }
 
 func (b *planBuilder) wantStopped(vm spec.VM, ovm VM, ok bool, now time.Time) {
@@ -175,10 +174,10 @@ func (b *planBuilder) wantStopped(vm spec.VM, ovm VM, ok bool, now time.Time) {
 	b.stop(vm.ID, ovm, now, genStop)
 }
 
-func (b *planBuilder) wantRunning(d spec.Desired, o Observed, vm spec.VM, ovm VM, ok bool, now time.Time, held map[spec.VolumeID][]spec.VMID, unknown bool) {
+func (b *planBuilder) wantRunning(o Observed, vm spec.VM, ovm VM, ok bool, now time.Time, held map[spec.VolumeID][]spec.VMID, unknown bool) {
 	ref := Ref{KindVM, vm.ID.String()}
 	if !ok || ovm.State == Off {
-		if !depsReady(d, o, vm) {
+		if !depsReady(o, vm) {
 			b.wait(ref, WaitDependencies)
 			return
 		}
@@ -277,7 +276,7 @@ func (b *planBuilder) stop(id spec.VMID, ovm VM, now time.Time, gen string) {
 	b.step(StopVM{ID: id, Force: force, Gen: gen})
 }
 
-func depsReady(d spec.Desired, o Observed, vm spec.VM) bool {
+func depsReady(o Observed, vm spec.VM) bool {
 	if _, ok := o.Volumes[vm.BootVolume]; !ok {
 		return false
 	}
